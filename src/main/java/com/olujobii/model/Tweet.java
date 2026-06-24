@@ -1,4 +1,7 @@
 package com.olujobii.model;
 
-public record Tweet() {
+public record Tweet(
+        String id,
+        String full_text
+) {
 }

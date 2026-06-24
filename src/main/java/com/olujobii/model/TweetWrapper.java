@@ -1,4 +1,6 @@
 package com.olujobii.model;
 
-public record TweetWrapper() {
+public record TweetWrapper(
+        Tweet tweet
+) {
 }
