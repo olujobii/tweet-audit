@@ -18,13 +18,14 @@ public class App {
 
         TweetHandler tweetHandler = new TweetHandler();
         CriteriaHandler criteriaHandler = new CriteriaHandler();
-        Orchestrator orchestrator = new Orchestrator(tweetHandler, criteriaHandler, path, config);
+        GeminiClient geminiClient = new GeminiClient();
+        Orchestrator orchestrator = new Orchestrator(tweetHandler, criteriaHandler, geminiClient, path, config);
 
         try{
             orchestrator.run();
         }catch(IOException ex){
             System.out.println("Error Occurred: "+ex.getMessage());
-            ex.printStackTrace();
+//            ex.printStackTrace();
         }
     }
 }

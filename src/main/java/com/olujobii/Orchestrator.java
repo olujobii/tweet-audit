@@ -11,13 +11,16 @@ public class Orchestrator {
     private final Gson gson;
     private final TweetHandler tweetHandler;
     private final CriteriaHandler criteriaHandler;
+    private final GeminiClient geminiClient;
     private final String filePath;
     private final String configPath;
 
-    public Orchestrator(TweetHandler tweetHandler, CriteriaHandler criteriaHandler, String filePath, String configPath) {
+    public Orchestrator(TweetHandler tweetHandler, CriteriaHandler criteriaHandler, GeminiClient geminiClient,
+                        String filePath, String configPath) {
         this.gson = new Gson();
         this.tweetHandler = tweetHandler;
         this.criteriaHandler = criteriaHandler;
+        this.geminiClient = geminiClient;
         this.filePath = filePath;
         this.configPath = configPath;
     }
@@ -31,5 +34,7 @@ public class Orchestrator {
         Criteria criteria = criteriaHandler.readConfigFile(gson, configPath);
 
         System.out.println(criteria);
+
+        geminiClient.analyzeTweet(gson, tweets, criteria);
     }
 }
