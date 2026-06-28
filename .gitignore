@@ -8,6 +8,7 @@ target/
 tweets.js
 *.js
 twitter-*.zip
+criteria.json
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

@@ -11,21 +11,14 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TweetImporter {
-    private final Gson gson;
-    private List<Tweet> tweets;
+public class TweetHandler {
 
-    public TweetImporter(){
-        gson = new Gson();
-        tweets = new ArrayList<>();
-    }
-
-    public void readFile(String path) throws IOException{
+    public List<Tweet> readFile(Gson gson, String path) throws IOException{
         List<TweetWrapper> tweetWrappers;
+        List<Tweet> tweets;
 
         try(BufferedReader reader = Files.newBufferedReader(Path.of(path))){
             Type type = new TypeToken<List<TweetWrapper>>(){}.getType();
@@ -37,6 +30,8 @@ public class TweetImporter {
         }
 
         tweets = tweetWrappers.stream().map(tweet -> new Tweet(tweet.tweet().id(), tweet.tweet().full_text())).toList();
-        System.out.println("You have "+tweets.size()+" tweets to be analyzed");
+
+        return tweets;
     }
+
 }
