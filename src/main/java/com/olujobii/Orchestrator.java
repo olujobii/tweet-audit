@@ -33,7 +33,7 @@ public class Orchestrator {
 
         Criteria criteria = criteriaHandler.readConfigFile(gson, configPath);
 
-        System.out.println(criteria);
+        System.out.println(String.join(", ",criteria.forbiddenWords()));
 
         geminiClient.analyzeTweet(gson, tweets, criteria);
     }
