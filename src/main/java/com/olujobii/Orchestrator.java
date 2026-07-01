@@ -33,8 +33,13 @@ public class Orchestrator {
 
         Criteria criteria = criteriaHandler.readConfigFile(gson, configPath);
 
-        System.out.println(String.join(", ",criteria.forbiddenWords()));
+        //CHECK IF CRITERIA IS NULL
+        if(criteria == null){
+            System.out.println("All fields in the criteria.json file CANNOT be empty. At least a value for a field must be given");
+            return;
+        }
+        System.out.println("Good to go");
 
-        geminiClient.analyzeTweet(gson, tweets, criteria);
+        geminiClient.analyzeTweet(tweets, criteria);
     }
 }
