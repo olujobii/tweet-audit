@@ -2,44 +2,22 @@ package com.olujobii;
 
 import com.google.genai.Client;
 import com.google.genai.types.*;
-import com.google.gson.Gson;
 import com.olujobii.model.Criteria;
 import com.olujobii.model.Tweet;
+import com.olujobii.util.StringBuilderUtil;
 
 import java.util.List;
 import java.util.Map;
 
 public class GeminiClient {
 
-    public void analyzeTweet(Gson gson, List<Tweet> tweets, Criteria criteria){
-        String criteriaJson = gson.toJson(criteria);
+    public void analyzeTweet(List<Tweet> tweets, Criteria criteria){
 
-        //CONVERTING LISTS OF TWEET TO A STRING
-        //FIXME: Can put this in a util package
-//        StringBuilder sb = new StringBuilder();
-//        for(int i = 49 ; i < 100; i++){
-//            int tweetNumber = i + 1;
-//            sb.append("[Tweet ").append(tweetNumber).append("]\n");
-//            sb.append("ID: ").append(tweets.get(i).id()).append("\n");
-//            sb.append("Text: ").append(tweets.get(i).full_text()).append("\n");
-//        }
-//
-//        String tweet = sb.toString();
+        //Building the alignment criteria and tweet to send as plain text to gemini
+        String criteriaString = StringBuilderUtil.buildAlignmentCriteriaString(criteria);
+        String tweet = StringBuilderUtil.buildTweetsString(tweets);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("[TWEET 1]");
-        sb.append("Text: ").append("I love pizza");
-        sb.append("ID: ").append("3231233121");
 
-        sb.append("[TWEET 2]");
-        sb.append("Text: ").append("Fuck you");
-        sb.append("ID: ").append("341323214");
-
-        sb.append("[TWEET 3]");
-        sb.append("Text: ").append("I hate you");
-        sb.append("ID: ").append("3423434");
-
-String tweet = sb.toString();
         Schema objectSchema = Schema.builder()
                 .type(Type.Known.OBJECT)
                 .properties(Map.of(
@@ -66,16 +44,17 @@ String tweet = sb.toString();
             GenerateContentResponse response = client.models.generateContent(
                     "gemini-2.5-flash-lite",
                     Content.fromParts(
-                            Part.fromText("Evaluate the following tweets using the moderation criteria:"),
-                            Part.fromText("Flag hate speech"),
-                            Part.fromText("INSTRUCTIONS"),
-                            Part.fromText("1. Read through all tweets provided."),
-                            Part.fromText("2. Be sure to evaluate each tweet individually, leave no single tweet out during evaluation."),
-                            Part.fromText("3. Flag tweet that violates the moderation criteria used as a guide."),
-                            Part.fromText("4. If none violate criteria, return []"),
-                            Part.fromText("5. Do not return compliant tweets"),
-                            Part.fromText("Here are the tweets for evaluation: "),
-                            Part.fromText(tweet)),
+                            Part.fromText("Evaluate every tweet INDEPENDENTLY"),
+                            Part.fromText("Flag a tweet if ANY of the conditions are true:"),
+                            Part.fromText(criteriaString),
+                            Part.fromText("LANGUAGE INTERPRETATION"),
+                            Part.fromText("- Tweets may contain English, Nigerian Pidgin, slang, abbreviations or different Nigerian languages like Yoruba, Igbo or Hausa"),
+                            Part.fromText("- Interpret intended meaning before applying rules"),
+                            Part.fromText("- Evaluate context of tweet"),
+                            Part.fromText("Return only tweets that violate. If no tweets violate, return an empty array"),
+                            Part.fromText("Here are the tweets: "),
+                            Part.fromText(tweet)
+                            ),
                     config
             );
             System.out.println(response.text());
@@ -93,19 +72,3 @@ String tweet = sb.toString();
         }
     }
 }
-
-//EXAMPLE TO TEST STATIC CRITERIA - WHICH WORKED
-//StringBuilder sb = new StringBuilder();
-//        sb.append("[TWEET 1]");
-//        sb.append("Text: ").append("I love pizza");
-//        sb.append("ID: ").append("3231233121");
-//
-//        sb.append("[TWEET 2]");
-//        sb.append("Text: ").append("Fuck you");
-//        sb.append("ID: ").append("341323214");
-//
-//        sb.append("[TWEET 3]");
-//        sb.append("Text: ").append("I hate you");
-//        sb.append("ID: ").append("3423434");
-//
-//String tweet = sb.toString();
