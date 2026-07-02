@@ -51,6 +51,9 @@ public class App {
         }catch(IOException ex){
             System.out.println("Error Occurred: "+ex.getMessage());
 //            ex.printStackTrace();
+        }catch(InterruptedException ex){
+            System.out.println("Error occurred: "+ex.getMessage());
+//            ex.printStackTrace();
         }
     }
 }

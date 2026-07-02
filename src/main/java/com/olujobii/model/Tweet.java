@@ -5,6 +5,8 @@ import com.google.gson.annotations.SerializedName;
 public record Tweet(
         @SerializedName("id_str")
         String id,
-        String full_text
+
+        @SerializedName("full_text")
+        String fullText
 ) {
 }

@@ -29,7 +29,7 @@ public class TweetParser {
             tweetWrappers = gson.fromJson(read.substring(startContent), type);
         }
 
-        tweets = tweetWrappers.stream().map(tweet -> new Tweet(tweet.tweet().id(), tweet.tweet().full_text())).toList();
+        tweets = tweetWrappers.stream().map(tweet -> new Tweet(tweet.tweet().id(), tweet.tweet().fullText())).toList();
 
         return tweets;
     }
