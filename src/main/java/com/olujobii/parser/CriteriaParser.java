@@ -1,4 +1,4 @@
-package com.olujobii;
+package com.olujobii.parser;
 
 import com.google.gson.Gson;
 import com.olujobii.model.Criteria;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class CriteriaHandler {
+public class CriteriaParser {
 
     public Criteria readConfigFile(Gson gson, String config) throws IOException {
 

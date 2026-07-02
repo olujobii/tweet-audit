@@ -1,4 +1,4 @@
-package com.olujobii;
+package com.olujobii.parser;
 
 
 import com.google.gson.Gson;
@@ -14,7 +14,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TweetHandler {
+public class TweetParser {
 
     public List<Tweet> readFile(Gson gson, String path) throws IOException{
         List<TweetWrapper> tweetWrappers;

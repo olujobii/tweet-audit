@@ -1,25 +1,28 @@
-package com.olujobii;
+package com.olujobii.orchestrator;
 
 import com.google.gson.Gson;
+import com.olujobii.ai_client.GeminiClient;
 import com.olujobii.model.Criteria;
 import com.olujobii.model.Tweet;
+import com.olujobii.parser.CriteriaParser;
+import com.olujobii.parser.TweetParser;
 
 import java.io.IOException;
 import java.util.List;
 
-public class Orchestrator {
+public class AppOrchestrator {
     private final Gson gson;
-    private final TweetHandler tweetHandler;
-    private final CriteriaHandler criteriaHandler;
+    private final TweetParser tweetParser;
+    private final CriteriaParser criteriaParser;
     private final GeminiClient geminiClient;
     private final String filePath;
     private final String configPath;
 
-    public Orchestrator(TweetHandler tweetHandler, CriteriaHandler criteriaHandler, GeminiClient geminiClient,
-                        String filePath, String configPath) {
+    public AppOrchestrator(TweetParser tweetParser, CriteriaParser criteriaParser, GeminiClient geminiClient,
+                           String filePath, String configPath) {
         this.gson = new Gson();
-        this.tweetHandler = tweetHandler;
-        this.criteriaHandler = criteriaHandler;
+        this.tweetParser = tweetParser;
+        this.criteriaParser = criteriaParser;
         this.geminiClient = geminiClient;
         this.filePath = filePath;
         this.configPath = configPath;
@@ -27,11 +30,11 @@ public class Orchestrator {
 
 
     public void run () throws IOException {
-        List<Tweet> tweets = tweetHandler.readFile(gson, filePath);
+        List<Tweet> tweets = tweetParser.readFile(gson, filePath);
 
         System.out.println("You have "+tweets.size()+" tweets to be analyzed");
 
-        Criteria criteria = criteriaHandler.readConfigFile(gson, configPath);
+        Criteria criteria = criteriaParser.readConfigFile(gson, configPath);
 
         //CHECK IF CRITERIA IS NULL
         if(criteria == null){
@@ -39,7 +42,5 @@ public class Orchestrator {
             return;
         }
         System.out.println("Good to go");
-
-        geminiClient.analyzeTweet(tweets, criteria);
     }
 }
