@@ -6,6 +6,7 @@ import com.google.genai.types.*;
 import java.util.Map;
 
 public class GeminiClient {
+    private static final String MODEL = "gemini-3.1-flash-lite";
 
     public void analyzeTweet(String prompt){
 
@@ -25,7 +26,7 @@ public class GeminiClient {
                     .build();
 
             GenerateContentResponse response = client.models.generateContent(
-                    "gemini-2.5-flash-lite",
+                    MODEL,
                     prompt,
                     config
             );
