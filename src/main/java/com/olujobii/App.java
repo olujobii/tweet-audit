@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class App {
-    private final static String ENVIRONMENT_VARIABLE_NAME = "GEMINI_API_KEY";
+    private final static String ENVIRONMENT_VARIABLE_NAME = "GOOGLE_API_KEY";
 
     public static void main( String[] args ) {
 
@@ -50,10 +50,8 @@ public class App {
             appOrchestrator.run();
         }catch(IOException ex){
             System.out.println("Error Occurred: "+ex.getMessage());
-//            ex.printStackTrace();
         }catch(InterruptedException ex){
             System.out.println("Error occurred: "+ex.getMessage());
-//            ex.printStackTrace();
         }
     }
 }

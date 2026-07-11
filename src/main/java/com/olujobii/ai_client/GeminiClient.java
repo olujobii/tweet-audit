@@ -6,7 +6,7 @@ import com.google.genai.types.*;
 import java.util.Map;
 
 public class GeminiClient {
-    private static final String MODEL = "gemini-3.1-flash-lite";
+    private static final String MODEL = "gemini-2.5-flash";
 
     public void analyzeTweet(String prompt){
 

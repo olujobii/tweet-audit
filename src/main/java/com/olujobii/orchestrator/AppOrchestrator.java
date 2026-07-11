@@ -1,7 +1,9 @@
 package com.olujobii.orchestrator;
 
+import com.google.genai.errors.ApiException;
 import com.google.gson.Gson;
 import com.olujobii.ai_client.GeminiClient;
+import com.olujobii.ai_client.RateLimiter;
 import com.olujobii.model.Criteria;
 import com.olujobii.model.Tweet;
 import com.olujobii.parser.CriteriaParser;
@@ -44,13 +46,40 @@ public class AppOrchestrator {
         }
 
 
-        //FIXME: SEQUENTIAL CONCURRENCY PATTERN
-        for(int i = 0 ; i < tweets.size(); i++){
-            int tweetNumber = i + 1;
-            System.out.printf("Analyzing %d/%d tweets.\n",tweetNumber, tweets.size());
-            String prompt = PromptBuilderUtil.buildPrompt(criteria, tweets.get(i));
-            geminiClient.analyzeTweet(prompt);
-            Thread.sleep(15000);
+        boolean didExceptionOccur = false;
+        int currentIndexWhenExceptionOccurred = 0;
+
+        RateLimiter rateLimiter = new RateLimiter();
+        for(int i = 0; i < tweets.size(); i++){
+            try{
+                //If a retry is happening, I want it to continue from where it stopped before it encountered the exception
+                if(didExceptionOccur){
+                    i = currentIndexWhenExceptionOccurred;
+                    didExceptionOccur = false;
+                }
+                int tweetNumber = i + 1;
+                System.out.printf("Analyzing %d/%d tweets.\n",tweetNumber, tweets.size());
+                String prompt = PromptBuilderUtil.buildPrompt(criteria, tweets.get(i));
+                geminiClient.analyzeTweet(prompt);
+                //Little delay before moving on to next prompt.
+                Thread.sleep(5000);
+            }catch(ApiException ex){
+                //Is it a Retryable error?
+                if(ex.code() == 429 || ex.code() == 500 || ex.code() == 503 || ex.code() == 504){
+                    //Have we reached our max number of retries?
+                    if(rateLimiter.getAttempt() < rateLimiter.getMaxRetries()){
+                        int waitTime = rateLimiter.getWaitTime();
+                        rateLimiter.incrementAttemptCount();
+                        didExceptionOccur = true;
+                        currentIndexWhenExceptionOccurred = i;
+                        Thread.sleep(waitTime);
+                    }else {
+                        throw new RuntimeException("Max number of retries reached, give it a couple of hours or try again after 24 hours.", ex);
+                    }
+                }else {
+                    throw new RuntimeException("An error occurred", ex);
+                }
+            }
         }
     }
 }
