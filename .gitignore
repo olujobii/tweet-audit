@@ -11,6 +11,7 @@ tweets.js
 *.js
 twitter-*.zip
 criteria.json
+flagged-tweets_*.csv
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

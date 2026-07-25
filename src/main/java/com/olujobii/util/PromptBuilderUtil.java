@@ -3,12 +3,14 @@ package com.olujobii.util;
 import com.olujobii.model.Criteria;
 import com.olujobii.model.Tweet;
 
+import java.util.List;
+
 public class PromptBuilderUtil {
 
-    public static String buildPrompt(Criteria criteria, Tweet tweet){
+    public static String buildPrompt(Criteria criteria, List<Tweet> tweet){
         StringBuilder sb = new StringBuilder();
             sb.append("MODERATION RULES\n");
-            sb.append("Flag this tweet if any of the conditions are true:\n");
+            sb.append("Flag any of the tweet if any of the conditions are true:\n");
 
             if(criteria.forbiddenWords() != null && !criteria.forbiddenWords().isEmpty()) {
                 sb.append("\nFORBIDDEN WORDS\n");
@@ -36,10 +38,20 @@ public class PromptBuilderUtil {
                 sb.append("Flag tweet if it contains discussion about politics, politicians, elections, political party or political advocacy\n");
             }
 
-            sb.append("\nIf the tweet violates any of the conditions, isFlagged in the JSON object should be set to true, if not, set it to false\n");
-            sb.append("\nHere is the tweet:\n");
-            sb.append("ID: ").append(tweet.id()).append("\n");
-            sb.append("Tweet: ").append(tweet.fullText()).append("\n");
+            sb.append("\nThe tweets will be in a batch\n");
+            sb.append("\nReturn all tweets provided back as a response no matter the outcome, stating your reason for your decision. ");
+            sb.append("If any tweets violates the condition, isFlagged should be true. ");
+            sb.append("Otherwise, it should be false\n");
+            sb.append("\nHere are the tweets:\n");
+            for(int i = 0 ; i < tweet.size(); i++){
+                int tweetNumber = i + 1;
+                sb.append("\nTWEET ").append(tweetNumber).append("\n");
+                sb.append("ID: ").append(tweet.get(i).id()).append("\n");
+                sb.append("Tweet: ").append(tweet.get(i).fullText()).append("\n");
+
+                if(i != tweet.size() - 1)
+                    sb.append("------------------------------\n");
+            }
         return sb.toString();
     }
 }

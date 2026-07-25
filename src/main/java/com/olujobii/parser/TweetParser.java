@@ -18,7 +18,6 @@ public class TweetParser {
 
     public List<Tweet> readFile(Gson gson, String path) throws IOException{
         List<TweetWrapper> tweetWrappers;
-        List<Tweet> tweets;
 
         try(BufferedReader reader = Files.newBufferedReader(Path.of(path))){
             Type type = new TypeToken<List<TweetWrapper>>(){}.getType();
@@ -29,9 +28,7 @@ public class TweetParser {
             tweetWrappers = gson.fromJson(read.substring(startContent), type);
         }
 
-        tweets = tweetWrappers.stream().map(tweet -> new Tweet(tweet.tweet().id(), tweet.tweet().fullText())).toList();
-
-        return tweets;
+        return tweetWrappers.stream().map(tweet -> new Tweet(tweet.tweet().id(), tweet.tweet().fullText())).toList();
     }
 
 }

@@ -1,8 +1,10 @@
 package com.olujobii;
 
 
-import com.olujobii.ai_client.GeminiClient;
+import com.olujobii.ai_client.AIProvider;
+import com.olujobii.ai_client.impl.GeminiClientImpl;
 import com.olujobii.orchestrator.AppOrchestrator;
+import com.olujobii.parser.CSVParser;
 import com.olujobii.parser.CriteriaParser;
 import com.olujobii.parser.TweetParser;
 
@@ -43,15 +45,18 @@ public class App {
 
         TweetParser tweetParser = new TweetParser();
         CriteriaParser criteriaParser = new CriteriaParser();
-        GeminiClient geminiClient = new GeminiClient();
-        AppOrchestrator appOrchestrator = new AppOrchestrator(tweetParser, criteriaParser, geminiClient, archivePath, criteriaPath);
+        CSVParser csvParser = new CSVParser();
+        AIProvider aiProvider = new GeminiClientImpl();
+        AppOrchestrator appOrchestrator = new AppOrchestrator(tweetParser, criteriaParser, csvParser, aiProvider, archivePath, criteriaPath);
 
         try{
             appOrchestrator.run();
         }catch(IOException ex){
             System.out.println("Error Occurred: "+ex.getMessage());
-        }catch(InterruptedException ex){
-            System.out.println("Error occurred: "+ex.getMessage());
+        }catch(RuntimeException | InterruptedException ex){
+            System.out.println(ex.getMessage());
+        }catch(Exception ex){
+            System.out.println(ex.getMessage());
         }
     }
 }
