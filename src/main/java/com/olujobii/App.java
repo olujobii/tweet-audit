@@ -1,7 +1,9 @@
 package com.olujobii;
 
 
+import com.google.gson.Gson;
 import com.olujobii.ai_client.AIProvider;
+import com.olujobii.ai_client.RateLimiter;
 import com.olujobii.ai_client.impl.GeminiClientImpl;
 import com.olujobii.orchestrator.AppOrchestrator;
 import com.olujobii.parser.CSVParser;
@@ -43,19 +45,19 @@ public class App {
             return;
         }
 
-        TweetParser tweetParser = new TweetParser();
-        CriteriaParser criteriaParser = new CriteriaParser();
+        Gson gson = new Gson();
+        TweetParser tweetParser = new TweetParser(gson);
+        CriteriaParser criteriaParser = new CriteriaParser(gson);
         CSVParser csvParser = new CSVParser();
         AIProvider aiProvider = new GeminiClientImpl();
-        AppOrchestrator appOrchestrator = new AppOrchestrator(tweetParser, criteriaParser, csvParser, aiProvider, archivePath, criteriaPath);
+        RateLimiter rateLimiter = new RateLimiter(5,1000,aiProvider);
+        AppOrchestrator appOrchestrator = new AppOrchestrator(tweetParser, criteriaParser, csvParser, rateLimiter, archivePath, criteriaPath);
 
         try{
             appOrchestrator.run();
         }catch(IOException ex){
             System.out.println("Error Occurred: "+ex.getMessage());
-        }catch(RuntimeException | InterruptedException ex){
-            System.out.println(ex.getMessage());
-        }catch(Exception ex){
+        } catch(Exception ex){
             System.out.println(ex.getMessage());
         }
     }

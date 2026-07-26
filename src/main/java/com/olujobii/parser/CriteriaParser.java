@@ -9,8 +9,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class CriteriaParser {
+    private final Gson gson;
 
-    public Criteria readConfigFile(Gson gson, String config) throws IOException {
+    public CriteriaParser(Gson gson) {
+        this.gson = gson;
+    }
+
+    public Criteria readConfigFile(String config) throws IOException {
 
         try(BufferedReader reader = Files.newBufferedReader(Path.of(config))){
 

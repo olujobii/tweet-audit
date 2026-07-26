@@ -15,8 +15,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class TweetParser {
+    private final Gson gson;
 
-    public List<Tweet> readFile(Gson gson, String path) throws IOException{
+    public TweetParser(Gson gson) {
+        this.gson = gson;
+    }
+
+    public List<Tweet> readFile(String path) throws IOException{
         List<TweetWrapper> tweetWrappers;
 
         try(BufferedReader reader = Files.newBufferedReader(Path.of(path))){

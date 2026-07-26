@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class GeminiClientImpl implements AIProvider {
     //#FIXME: Remember to change thinking budget to thinking config when using Gemini 3 model series
-    private static final String MODEL = "gemini-3.5-flash-lite";
+    private static final String MODEL = "gemini-2.5-flash-lite";
     private final Gson gson;
 
     public GeminiClientImpl(){
@@ -51,13 +51,13 @@ public class GeminiClientImpl implements AIProvider {
                     .responseMimeType("application/json")
                     .responseJsonSchema(responseArrayObject)
                     //Use only for 2.5 models
-//                    .thinkingConfig(ThinkingConfig.builder()
-//                            .thinkingBudget(0)
-//                            .build())
-//                    Use only for 3 models
                     .thinkingConfig(ThinkingConfig.builder()
-                            .thinkingLevel(ThinkingLevel.Known.LOW)
+                            .thinkingBudget(0)
                             .build())
+//                    Use only for 3 models
+//                    .thinkingConfig(ThinkingConfig.builder()
+//                            .thinkingLevel(ThinkingLevel.Known.LOW)
+//                            .build())
                     .build();
 
             GenerateContentResponse response = client.models.generateContent(

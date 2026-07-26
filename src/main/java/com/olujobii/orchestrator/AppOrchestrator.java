@@ -1,7 +1,6 @@
 package com.olujobii.orchestrator;
 
-import com.google.gson.Gson;
-import com.olujobii.ai_client.AIProvider;
+import com.olujobii.ai_client.RateLimiter;
 import com.olujobii.model.*;
 import com.olujobii.parser.CSVParser;
 import com.olujobii.parser.CriteriaParser;
@@ -15,28 +14,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AppOrchestrator {
-    private final Gson gson;
     private final TweetParser tweetParser;
     private final CriteriaParser criteriaParser;
     private final CSVParser csvParser;
-    private final AIProvider aiProvider;
+    private final RateLimiter rateLimiter;
     private final String filePath;
     private final String configPath;
 
-    public AppOrchestrator(TweetParser tweetParser, CriteriaParser criteriaParser, CSVParser csvParser, AIProvider aiProvider,
+    public AppOrchestrator(TweetParser tweetParser, CriteriaParser criteriaParser, CSVParser csvParser, RateLimiter rateLimiter,
                            String filePath, String configPath) {
-        this.gson = new Gson();
         this.tweetParser = tweetParser;
         this.criteriaParser = criteriaParser;
         this.csvParser = csvParser;
-        this.aiProvider = aiProvider;
+        this.rateLimiter = rateLimiter;
         this.filePath = filePath;
         this.configPath = configPath;
     }
 
 
     public void run() throws IOException, InterruptedException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
-        List<Tweet> tweets = tweetParser.readFile(gson, filePath);
+        List<Tweet> tweets = tweetParser.readFile(filePath);
 
         if(tweets.isEmpty()){
             System.out.println("You have no archived tweets to analyze");
@@ -45,7 +42,7 @@ public class AppOrchestrator {
 
         System.out.println("You have "+tweets.size()+" tweets to be analyzed");
 
-        Criteria criteria = criteriaParser.readConfigFile(gson, configPath);
+        Criteria criteria = criteriaParser.readConfigFile(configPath);
 
         if(criteria == null || (criteria.forbiddenWords() == null && !criteria.professionalCheck() && !criteria.tone() && !criteria.excludePolitics()))
             throw new RuntimeException("Criteria alignment cannot be empty");
@@ -68,8 +65,7 @@ public class AppOrchestrator {
             System.out.println("BATCH "+counter);
             String prompt = PromptBuilderUtil.buildPrompt(criteria, tweets.subList(startingIndex, endingIndex));
 
-            modelResponseTweets.addAll(aiProvider.analyzeTweets(prompt));
-
+            modelResponseTweets.addAll(rateLimiter.callAIProvider(prompt));
             //separate flagged tweets
             flaggedTweets.addAll(getFlaggedTweets(modelResponseTweets));
 
@@ -88,7 +84,7 @@ public class AppOrchestrator {
             System.out.println("BATCH "+counter);
             String prompt = PromptBuilderUtil.buildPrompt(criteria, tweets.subList(remainderStartIndex, tweets.size()));
 
-            modelResponseTweets.addAll(aiProvider.analyzeTweets(prompt));
+            modelResponseTweets.addAll(rateLimiter.callAIProvider(prompt));
             //separate flagged tweets
             flaggedTweets.addAll(getFlaggedTweets(modelResponseTweets));
 
