@@ -20,7 +20,6 @@ public class RateLimiter{
         this.randomJitter = new Random();
     }
 
-
     public List<ModelResponseTweet> callAIProvider(String prompt) throws InterruptedException{
         List<ModelResponseTweet> tweets = new ArrayList<>();
 
