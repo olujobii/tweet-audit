@@ -37,7 +37,7 @@ public class RateLimiter{
                     throw new RuntimeException(ex);
                 }
             }catch(RuntimeException ex){
-                throw new RuntimeException(ex);
+                throw new RuntimeException("Maximum retry limit reached. Gemini API currently unavailable.",ex);
             }
         }
         return tweets;

@@ -70,7 +70,6 @@ public class AppOrchestrator {
             flaggedTweets.addAll(getFlaggedTweets(modelResponseTweets));
 
             if(!flaggedTweets.isEmpty()){
-            //FIXME: Keeps writing header names to csv file upon each write. We need to fix that
                 csvParser.parseToCSV(flaggedTweets);
                 flaggedTweets.clear();
             }
