@@ -1,36 +1,35 @@
 package com.olujobii.orchestrator;
 
-import com.olujobii.ai_client.RateLimiter;
+import com.olujobii.ai_client.ExponentialBackoff;
 import com.olujobii.model.*;
-import com.olujobii.parser.CSVParser;
-import com.olujobii.parser.CriteriaParser;
+import com.olujobii.parser.CsvParser;
 import com.olujobii.parser.TweetParser;
 import com.olujobii.util.PromptBuilderUtil;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AppOrchestrator {
     private final TweetParser tweetParser;
-    private final CriteriaParser criteriaParser;
-    private final CSVParser csvParser;
-    private final RateLimiter rateLimiter;
+    private final CsvParser csvParser;
+    private final ExponentialBackoff exponentialBackoff;
     private final String filePath;
-    private final String configPath;
+    private final String processedTweetsPath;
+    private final Criteria criteria;
 
-    public AppOrchestrator(TweetParser tweetParser, CriteriaParser criteriaParser, CSVParser csvParser, RateLimiter rateLimiter,
-                           String filePath, String configPath) {
+    public AppOrchestrator(TweetParser tweetParser, CsvParser csvParser, ExponentialBackoff exponentialBackoff,
+                           String filePath, String processedTweetsPath, Criteria criteria) {
         this.tweetParser = tweetParser;
-        this.criteriaParser = criteriaParser;
         this.csvParser = csvParser;
-        this.rateLimiter = rateLimiter;
+        this.exponentialBackoff = exponentialBackoff;
         this.filePath = filePath;
-        this.configPath = configPath;
+        this.processedTweetsPath = processedTweetsPath;
+        this.criteria = criteria;
     }
-
 
     public void run() throws IOException, InterruptedException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
         List<Tweet> tweets = tweetParser.readFile(filePath);
@@ -40,74 +39,103 @@ public class AppOrchestrator {
             return;
         }
 
-        System.out.println("You have "+tweets.size()+" tweets to be analyzed");
+        //Reading processed tweets from file
+        Set<String> processedTweetsFromCsv = csvParser.readProcessedTweetsFile(processedTweetsPath)
+                        .orElse(new HashSet<>());
 
-        Criteria criteria = criteriaParser.readConfigFile(configPath);
-
-        if(criteria == null || (criteria.forbiddenWords() == null && !criteria.professionalCheck() && !criteria.tone() && !criteria.excludePolitics()))
-            throw new RuntimeException("Criteria alignment cannot be empty");
-
-        batchElements(criteria, tweets);
+        batchElements(criteria, tweets, processedTweetsFromCsv);
     }
 
-    private void batchElements(Criteria criteria, List<Tweet> tweets) throws InterruptedException,
+    private void batchElements(Criteria criteria, List<Tweet> tweets, Set<String> processedTweetsFromCsv) throws InterruptedException,
             IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
-        final int noOfElementsInBatch = 5;
-        List<ModelResponseTweet> modelResponseTweets = new ArrayList<>();
-        List<FlaggedTweet> flaggedTweets = new ArrayList<>();
-        int counter = 1;
-        int noOfBatchGroup = tweets.size() / noOfElementsInBatch;
 
+        final int noOfElementsInBatch = 5;
+        int noOfBatchGroup = tweets.size() / noOfElementsInBatch;
+        int totalBatchToProcess = tweets.size() % noOfElementsInBatch != 0 ? (noOfBatchGroup + 1) : noOfBatchGroup;
+
+        System.out.println("Tweets will be analyzed in "+totalBatchToProcess+" batches, each batch containing 5 tweets");
+
+        int counter = 1;
         while(counter <= noOfBatchGroup){
             int startingIndex = (counter - 1) * noOfElementsInBatch;
             int endingIndex = counter * noOfElementsInBatch;
 
-            System.out.println("BATCH "+counter);
-            String prompt = PromptBuilderUtil.buildPrompt(criteria, tweets.subList(startingIndex, endingIndex));
+            List<Tweet> batchedTweets = checkIfTweetIsProcessed(new ArrayList<>(tweets.subList(startingIndex,endingIndex)), processedTweetsFromCsv);
 
-            modelResponseTweets.addAll(rateLimiter.callAIProvider(prompt));
-            //separate flagged tweets
-            flaggedTweets.addAll(getFlaggedTweets(modelResponseTweets));
-
-            if(!flaggedTweets.isEmpty()){
-                csvParser.parseToCSV(flaggedTweets);
-                flaggedTweets.clear();
+            if(batchedTweets.isEmpty()) {
+                System.out.println("All tweets has been processed in Batch "+counter);
+                counter++;
+                continue;
             }
-            Thread.sleep(10000);
+
+            System.out.println("BATCH "+counter+"/"+totalBatchToProcess);
+
+            String prompt = PromptBuilderUtil.buildPrompt(criteria, batchedTweets);
+
+            analyzeTweets(prompt);
             counter++;
         }
 
         //Checks if there is a remainder or if the list size is less than noOfElementsInBatch
         int remainderStartIndex = noOfElementsInBatch * noOfBatchGroup;
         if(remainderStartIndex < tweets.size()){
-            System.out.println("BATCH "+counter);
-            String prompt = PromptBuilderUtil.buildPrompt(criteria, tweets.subList(remainderStartIndex, tweets.size()));
+            List<Tweet> batchedTweets = checkIfTweetIsProcessed(new ArrayList<>(tweets.subList(remainderStartIndex,tweets.size())), processedTweetsFromCsv);
 
-            modelResponseTweets.addAll(rateLimiter.callAIProvider(prompt));
-            //separate flagged tweets
-            flaggedTweets.addAll(getFlaggedTweets(modelResponseTweets));
-
-            if(!flaggedTweets.isEmpty()){
-                csvParser.parseToCSV(flaggedTweets);
-                flaggedTweets.clear();
+            if(batchedTweets.isEmpty()) {
+                System.out.println("All tweets has been processed in Batch "+counter);
+                return;
             }
 
-            Thread.sleep(10000);
+            System.out.println("BATCH "+counter+"/"+totalBatchToProcess);
+            String prompt = PromptBuilderUtil.buildPrompt(criteria, batchedTweets);
+
+            analyzeTweets(prompt);
         }
+    }
+
+    private void analyzeTweets(String prompt)throws InterruptedException,
+            IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
+
+        //Send prompt to AI and get response in ArrayList
+        List<ModelResponseTweet> modelResponseTweets = new ArrayList<>(exponentialBackoff.callAIProvider(prompt));
+
+        //Get tweets flagged by AI
+        List<FlaggedTweet> flaggedTweets = new ArrayList<>(getFlaggedTweets(modelResponseTweets));
+
+        //Get Tweet ID for all processed tweets
+        Set<String> processedTweets = new HashSet<>(getProcessedTweets(modelResponseTweets));
+
+        if(!flaggedTweets.isEmpty()){
+            String outputPath = "flagged-tweets_"+ LocalDate.now()+".csv";
+            csvParser.parseFlaggedTweetsToCSVFile(flaggedTweets, outputPath);
+            flaggedTweets.clear();
+        }
+
+        csvParser.parseProcessedTweetsToCSVFile(processedTweets, processedTweetsPath);
+        processedTweets.clear();
+        modelResponseTweets.clear();
     }
 
     private List<FlaggedTweet> getFlaggedTweets(List<ModelResponseTweet> modelResponseTweets){
         return modelResponseTweets.stream()
-                //isFlaggedTweetSaved is necessary because it prevents duplicate writing of saved flagged tweet to csv file
-                .filter(tweet -> {
-                    if(tweet.isFlagged() && !tweet.isFlaggedTweetSaved()){
-                        tweet.setIsFlaggedTweetSaved();
-                        return true;
-                    }
-                    return false;
-                })
-                .map(tweet -> new FlaggedTweet(buildTweetURL(tweet.getId()), tweet.getClassification(), false))
+                .filter(ModelResponseTweet::isFlagged)
+                .map(tweet -> new FlaggedTweet(buildTweetURL(tweet.id()), tweet.classification()))
                 .toList();
+    }
+
+    private Set<String> getProcessedTweets(List<ModelResponseTweet> modelResponseTweets){
+        return modelResponseTweets.stream()
+                .map(ModelResponseTweet::id)
+                .collect(Collectors.toSet());
+    }
+
+    private List<Tweet> checkIfTweetIsProcessed(List<Tweet> tweets, Set<String> processedTweets){
+        if(processedTweets.isEmpty())
+            return tweets;
+
+        tweets.removeIf(tweet -> processedTweets.contains(tweet.id()));
+
+        return tweets;
     }
 
     private String buildTweetURL(String id){

@@ -1,10 +1,9 @@
 package com.olujobii.parser;
 
 import com.olujobii.model.FlaggedTweet;
-import com.opencsv.bean.HeaderColumnNameMappingStrategy;
-import com.opencsv.bean.HeaderColumnNameMappingStrategyBuilder;
-import com.opencsv.bean.StatefulBeanToCsv;
-import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.CSVWriterBuilder;
+import com.opencsv.ICSVWriter;
+import com.opencsv.bean.*;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
@@ -15,16 +14,13 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class CSVParser {
+public class CsvParser {
 
-    public void parseToCSV(List<FlaggedTweet> flaggedTweets) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
-        LocalDate now = LocalDate.now();
-        String filePath = "flagged-tweets_"+now+".csv";
-        Path path = Path.of(filePath);
+    public void parseFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
+        Path path = Path.of(outputPath);
 
         boolean isFileDoesNotExistsOrEmpty = Files.notExists(path) || isFileEmpty(path);
 
@@ -61,6 +57,35 @@ public class CSVParser {
                 writer.write(dataOnly);
             }
         }
+    }
+
+    public void parseProcessedTweetsToCSVFile(Set<String> processedTweets, String processedTweetsPath) throws IOException {
+
+        try(BufferedWriter writer =  Files.newBufferedWriter(Path.of(processedTweetsPath), StandardOpenOption.CREATE,StandardOpenOption.APPEND);
+            ICSVWriter csvWriter = new CSVWriterBuilder(writer)
+                    .withSeparator('\n')
+                    .build()){
+            String[] tweets = processedTweets.toArray(new String[0]);
+            List<String[]> sent = new ArrayList<>();
+
+            sent.add(tweets);
+            csvWriter.writeAll(sent, false);
+        }
+    }
+
+    public Optional<Set<String>> readProcessedTweetsFile(String processedTweetsPath) throws IOException{
+        Path path = Path.of(processedTweetsPath);
+        boolean fileExists = Files.exists(path) && !isFileEmpty(path);
+
+        if(fileExists){
+            try(BufferedReader reader = Files.newBufferedReader(path)){
+
+                String[] processedTweets = reader.lines().toArray(String[]::new);
+
+                return Optional.of(Set.copyOf(Arrays.stream(processedTweets).collect(Collectors.toSet())));
+            }
+        }
+        return Optional.empty();
     }
 
     private boolean isFileEmpty(Path path) throws IOException {

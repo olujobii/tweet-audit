@@ -4,7 +4,6 @@ target/
 !**/src/test/**/target/
 .kotlin
 Play.MD
-src/main/java/com/olujobii/Play.java
 
 ### IGNORING TWITTER ARCHIVE AND FILES ###
 tweets.js
@@ -12,6 +11,7 @@ tweets.js
 twitter-*.zip
 criteria.json
 flagged-tweets_*.csv
+processed-tweets.csv
 
 ### IntelliJ IDEA ###
 .idea/modules.xml

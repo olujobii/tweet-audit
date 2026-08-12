@@ -7,36 +7,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class RateLimiter{
-    private final int maxAttempts;
-    private final int baseDelay;
+public class ExponentialBackoff {
     private final AIProvider aiProvider;
     private final Random randomJitter;
 
-    public RateLimiter(int maxAttempts, int baseDelay, AIProvider aiProvider){
-        this.maxAttempts = maxAttempts;
-        this.baseDelay = baseDelay;
+    public ExponentialBackoff(AIProvider aiProvider){
         this.aiProvider = aiProvider;
         this.randomJitter = new Random();
     }
 
     public List<ModelResponseTweet> callAIProvider(String prompt) throws InterruptedException{
-        List<ModelResponseTweet> tweets = new ArrayList<>();
+        final int maxAttempts = 5;
+        final int baseDelay = 1000;
 
-        for(int attempt = 0; attempt < maxAttempts; attempt++) {
+        List<ModelResponseTweet> tweets = new ArrayList<>();
+        for(int attempt = 0; attempt <= maxAttempts; attempt++) {
             try{
                 tweets.addAll(aiProvider.analyzeTweets(prompt)); //If this throws an exception, we handle it here
                 break;
             }catch (ApiException ex){
-                if((ex.code() == 429 || ex.code() == 500 || ex.code() == 503 || ex.code() == 504) && (attempt != maxAttempts - 1)){
+                if((ex.code() == 429 || ex.code() == 500 || ex.code() == 503) && (attempt != maxAttempts)){
                     int delay = baseDelay * (int) Math.pow(2,attempt);
                     int finalDelay = delay + randomJitter.nextInt(500,1100);
                     Thread.sleep(finalDelay);
                 }else{
-                    throw new RuntimeException(ex);
+                    throw ex;
                 }
-            }catch(RuntimeException ex){
-                throw new RuntimeException("Maximum retry limit reached. Gemini API currently unavailable.",ex);
             }
         }
         return tweets;

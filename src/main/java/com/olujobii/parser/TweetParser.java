@@ -15,19 +15,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class TweetParser {
-    private final Gson gson;
-
-    public TweetParser(Gson gson) {
-        this.gson = gson;
-    }
 
     public List<Tweet> readFile(String path) throws IOException{
+        Gson gson = new Gson();
         List<TweetWrapper> tweetWrappers;
 
         try(BufferedReader reader = Files.newBufferedReader(Path.of(path))){
             Type type = new TypeToken<List<TweetWrapper>>(){}.getType();
 
-            //This ensures Gson starts parsing from the beginning of array "[" to match a valid JSON structure.
+            //This ensures Gson starts parsing from the beginning of array "[" to match a valid JSON array structure.
             String read = reader.lines().collect(Collectors.joining());
             int startContent = read.indexOf("[");
             tweetWrappers = gson.fromJson(read.substring(startContent), type);
@@ -35,5 +31,4 @@ public class TweetParser {
 
         return tweetWrappers.stream().map(tweet -> new Tweet(tweet.tweet().id(), tweet.tweet().fullText())).toList();
     }
-
 }
