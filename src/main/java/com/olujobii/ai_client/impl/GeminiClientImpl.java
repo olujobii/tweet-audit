@@ -45,6 +45,7 @@ public class GeminiClientImpl implements AIProvider {
                 .items(jsonObject)
                 .build();
 
+        //fixme: Rate limiter should be called here
         try(Client client = new Client()){
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .responseMimeType("application/json")
