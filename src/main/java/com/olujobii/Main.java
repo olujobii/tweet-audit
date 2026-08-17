@@ -1,7 +1,6 @@
 package com.olujobii;
 
 import com.olujobii.ai_client.AIProvider;
-import com.olujobii.ai_client.RetryHandler;
 import com.olujobii.ai_client.impl.GeminiClientImpl;
 import com.olujobii.config.ConfigLoader;
 import com.olujobii.model.Criteria;
@@ -59,9 +58,8 @@ public class Main {
         TweetParser tweetParser = new TweetParser();
         CsvParser csvParser = new CsvParser();
         AIProvider aiProvider = new GeminiClientImpl();
-        RetryHandler retryHandler = new RetryHandler(aiProvider);
         
-        return new AppOrchestrator(tweetParser, csvParser, retryHandler,
+        return new AppOrchestrator(tweetParser, csvParser, aiProvider,
                 archivePath, processedTweetsPath, criteria);
     }
 

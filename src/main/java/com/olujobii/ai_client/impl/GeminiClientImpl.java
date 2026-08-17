@@ -14,13 +14,19 @@ import java.util.Map;
 public class GeminiClientImpl implements AIProvider {
     private static final String MODEL = "gemini-3.1-flash-lite";
     private final Gson gson;
+    private final RetryHandler retryHandler;
 
     public GeminiClientImpl(){
         this.gson = new Gson();
+        this.retryHandler = new RetryHandler(new RateLimiter(15));
     }
 
     @Override
-    public List<ModelResponseTweet> analyzeTweets(String prompt){
+    public List<ModelResponseTweet> analyzeTweets(String prompt) throws InterruptedException{
+        return retryHandler.retryMechanism(() -> sendPrompt(prompt));
+    }
+
+    private List<ModelResponseTweet> sendPrompt(String prompt){
         List<ModelResponseTweet> modelResponseTweets;
         java.lang.reflect.Type type = new TypeToken<List<ModelResponseTweet>>(){}.getType();
 
@@ -30,10 +36,10 @@ public class GeminiClientImpl implements AIProvider {
                         "id",Schema.builder().type(Type.Known.STRING).description("Represents the tweet id").build(),
                         "isFlagged",Schema.builder().type(Type.Known.BOOLEAN).description("This indicates whether the tweet is flagged or not").build(),
                         "tweet",Schema.builder().type(Type.Known.STRING).description("Represents the tweet content").build(),
-                            "classification",Schema.builder().type(Type.Known.STRING)
-                                            .enum_(Reason.DISRESPECTFUL.getValue(), Reason.FORBIDDEN_WORDS.getValue(),
-                                                    Reason.UNPROFESSIONAL.getValue(), Reason.POLITICAL.getValue(),
-                                                    Reason.NO_ISSUE.getValue())
+                        "classification",Schema.builder().type(Type.Known.STRING)
+                                .enum_(Reason.DISRESPECTFUL.getValue(), Reason.FORBIDDEN_WORDS.getValue(),
+                                        Reason.UNPROFESSIONAL.getValue(), Reason.POLITICAL.getValue(),
+                                        Reason.NO_ISSUE.getValue())
                                 .description("Must be exactly one of the predefined values. If the tweet is not flagged, it should be No issue.").build()
                 ))
                 .required("id","tweet","classification","isFlagged")
@@ -45,7 +51,6 @@ public class GeminiClientImpl implements AIProvider {
                 .items(jsonObject)
                 .build();
 
-        //fixme: Rate limiter should be called here
         try(Client client = new Client()){
             GenerateContentConfig config = GenerateContentConfig.builder()
                     .responseMimeType("application/json")
