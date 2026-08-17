@@ -36,7 +36,7 @@ public class AppOrchestrator {
         this.criteria = criteria;
     }
 
-    public void run() throws IOException, InterruptedException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
+    public void run() throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
         List<Tweet> tweets = tweetParser.readFile(filePath);
 
         if(tweets.isEmpty()){
@@ -51,7 +51,7 @@ public class AppOrchestrator {
         batchElements(criteria, tweets, processedTweetsFromCsv);
     }
 
-    private void batchElements(Criteria criteria, List<Tweet> tweets, Set<String> processedTweetsFromCsv) throws InterruptedException,
+    private void batchElements(Criteria criteria, List<Tweet> tweets, Set<String> processedTweetsFromCsv) throws
             IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
 
         final int noOfElementsInBatch = 5;
@@ -98,7 +98,7 @@ public class AppOrchestrator {
         }
     }
 
-    private void analyzeTweets(String prompt)throws InterruptedException,
+    private void analyzeTweets(String prompt)throws
             IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
 
         //Send prompt to AI and get response in ArrayList

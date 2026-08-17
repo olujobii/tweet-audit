@@ -8,6 +8,7 @@ import com.olujobii.ai_client.AIProvider;
 import com.olujobii.model.ModelResponseTweet;
 import com.olujobii.model.Reason;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +23,15 @@ public class GeminiClientImpl implements AIProvider {
     }
 
     @Override
-    public List<ModelResponseTweet> analyzeTweets(String prompt) throws InterruptedException{
-        return retryHandler.retryMechanism(() -> sendPrompt(prompt));
+    public List<ModelResponseTweet> analyzeTweets(String prompt){
+        List<ModelResponseTweet> tweets;
+        try{
+            tweets = new ArrayList<>(retryHandler.retryMechanism(() -> sendPrompt(prompt)));
+        }catch(InterruptedException ex){
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Tweet Analysis Interrupted :", ex);
+        }
+        return tweets;
     }
 
     private List<ModelResponseTweet> sendPrompt(String prompt){

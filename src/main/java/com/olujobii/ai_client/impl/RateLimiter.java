@@ -1,6 +1,6 @@
-package com.olujobii.ai_client;
+package com.olujobii.ai_client.impl;
 
-public class RateLimiter {
+class RateLimiter {
     private final int requestPerMinute;
     private final long interval;
     private long lastProcessedTime;
@@ -18,6 +18,7 @@ public class RateLimiter {
         //This is for first ever request
         if(lastProcessedTime == 0) {
             System.out.println("First ever tweets, good to go in Rate Limiter");
+            lastProcessedTime = System.currentTimeMillis();
             return;
         }
 
