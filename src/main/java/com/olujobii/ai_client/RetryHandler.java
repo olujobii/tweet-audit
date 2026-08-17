@@ -7,11 +7,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class ExponentialBackoff {
+public class RetryHandler {
     private final AIProvider aiProvider;
     private final Random randomJitter;
 
-    public ExponentialBackoff(AIProvider aiProvider){
+    public RetryHandler(AIProvider aiProvider){
         this.aiProvider = aiProvider;
         this.randomJitter = new Random();
     }
@@ -27,6 +27,7 @@ public class ExponentialBackoff {
                 break;
             }catch (ApiException ex){
                 if((ex.code() == 429 || ex.code() == 500 || ex.code() == 503) && (attempt != maxAttempts)){
+                    System.out.println(ex.code());
                     int delay = baseDelay * (int) Math.pow(2,attempt);
                     int finalDelay = delay + randomJitter.nextInt(500,1100);
                     Thread.sleep(finalDelay);

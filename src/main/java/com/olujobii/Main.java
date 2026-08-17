@@ -1,7 +1,6 @@
 package com.olujobii;
 
 import com.olujobii.ai_client.AIProvider;
-import com.olujobii.ai_client.ExponentialBackoff;
 import com.olujobii.ai_client.impl.GeminiClientImpl;
 import com.olujobii.config.ConfigLoader;
 import com.olujobii.model.Criteria;
@@ -59,9 +58,9 @@ public class Main {
         TweetParser tweetParser = new TweetParser();
         CsvParser csvParser = new CsvParser();
         AIProvider aiProvider = new GeminiClientImpl();
-        ExponentialBackoff exponentialBackoff = new ExponentialBackoff(aiProvider);
         
-        return new AppOrchestrator(tweetParser, csvParser, exponentialBackoff, archivePath, processedTweetsPath, criteria);
+        return new AppOrchestrator(tweetParser, csvParser, aiProvider,
+                archivePath, processedTweetsPath, criteria);
     }
 
     private static void checkFileExtension(String args, String expectedFileExtension){

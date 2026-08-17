@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface AIProvider {
 
-    List<ModelResponseTweet> analyzeTweets(String prompt);
+    List<ModelResponseTweet> analyzeTweets(String prompt) throws InterruptedException;
 }

@@ -1,6 +1,6 @@
 package com.olujobii.orchestrator;
 
-import com.olujobii.ai_client.ExponentialBackoff;
+import com.olujobii.ai_client.AIProvider;
 import com.olujobii.model.*;
 import com.olujobii.parser.CsvParser;
 import com.olujobii.parser.TweetParser;
@@ -16,16 +16,21 @@ import java.util.stream.Collectors;
 public class AppOrchestrator {
     private final TweetParser tweetParser;
     private final CsvParser csvParser;
-    private final ExponentialBackoff exponentialBackoff;
+    private final AIProvider aiProvider;
     private final String filePath;
     private final String processedTweetsPath;
     private final Criteria criteria;
 
-    public AppOrchestrator(TweetParser tweetParser, CsvParser csvParser, ExponentialBackoff exponentialBackoff,
-                           String filePath, String processedTweetsPath, Criteria criteria) {
+    public AppOrchestrator(TweetParser tweetParser,
+                           CsvParser csvParser,
+                           AIProvider aiProvider,
+                           String filePath,
+                           String processedTweetsPath,
+                           Criteria criteria) {
+
         this.tweetParser = tweetParser;
         this.csvParser = csvParser;
-        this.exponentialBackoff = exponentialBackoff;
+        this.aiProvider = aiProvider;
         this.filePath = filePath;
         this.processedTweetsPath = processedTweetsPath;
         this.criteria = criteria;
@@ -97,7 +102,7 @@ public class AppOrchestrator {
             IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
 
         //Send prompt to AI and get response in ArrayList
-        List<ModelResponseTweet> modelResponseTweets = new ArrayList<>(exponentialBackoff.callAIProvider(prompt));
+        List<ModelResponseTweet> modelResponseTweets = new ArrayList<>(aiProvider.analyzeTweets(prompt));
 
         //Get tweets flagged by AI
         List<FlaggedTweet> flaggedTweets = new ArrayList<>(getFlaggedTweets(modelResponseTweets));
