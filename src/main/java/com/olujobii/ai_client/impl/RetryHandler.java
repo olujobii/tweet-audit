@@ -29,7 +29,6 @@ class RetryHandler {
                 break;
             }catch (ApiException ex){
                 if((ex.code() == 429 || ex.code() == 500 || ex.code() == 503) && (attempt != maxAttempts)){
-                    System.out.println("Error code: "+ex.code());
                     int delay = baseDelay * (int) Math.pow(2,attempt);
                     int finalDelay = delay + randomJitter.nextInt(500,1100);
                     Thread.sleep(finalDelay);

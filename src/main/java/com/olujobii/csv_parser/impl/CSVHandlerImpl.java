@@ -1,8 +1,7 @@
-package com.olujobii.parser;
+package com.olujobii.csv_parser.impl;
 
+import com.olujobii.csv_parser.CSVHandler;
 import com.olujobii.model.FlaggedTweet;
-import com.opencsv.CSVWriterBuilder;
-import com.opencsv.ICSVWriter;
 import com.opencsv.bean.*;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
@@ -17,10 +16,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CsvParser {
+public class CSVHandlerImpl implements CSVHandler {
 
-    public void parseFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
-        Path path = Path.of(outputPath);
+    @Override
+    public void parseFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException {
+        Path path = Path.of("data/output/"+outputPath);
 
         boolean isFileDoesNotExistsOrEmpty = Files.notExists(path) || isFileEmpty(path);
 
@@ -33,6 +33,7 @@ public class CsvParser {
 
         //If true, it should create new file and insert headers. If false, it should append to file and skip insertion of headers.
         if(isFileDoesNotExistsOrEmpty) {
+            Files.createDirectory(Path.of("data/output"));
             try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE)) {
 
                 StatefulBeanToCsv<FlaggedTweet> beanToCsv = new StatefulBeanToCsvBuilder<FlaggedTweet>(writer)
@@ -40,6 +41,8 @@ public class CsvParser {
                         .build();
 
                 beanToCsv.write(flaggedTweets);
+            }catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException ex){
+                throw new RuntimeException("Error occurred while writing flagged tweets to "+outputPath, ex);
             }
         }else{
             try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.APPEND);
@@ -55,37 +58,10 @@ public class CsvParser {
                 int index = contents.indexOf("\n") + 1;
                 String dataOnly = contents.substring(index);
                 writer.write(dataOnly);
+            }catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException ex){
+                throw new RuntimeException("Error occurred while writing flagged tweets to "+outputPath, ex);
             }
         }
-    }
-
-    public void parseProcessedTweetsToCSVFile(Set<String> processedTweets, String processedTweetsPath) throws IOException {
-
-        try(BufferedWriter writer =  Files.newBufferedWriter(Path.of(processedTweetsPath), StandardOpenOption.CREATE,StandardOpenOption.APPEND);
-            ICSVWriter csvWriter = new CSVWriterBuilder(writer)
-                    .withSeparator('\n')
-                    .build()){
-            String[] tweets = processedTweets.toArray(new String[0]);
-            List<String[]> sent = new ArrayList<>();
-
-            sent.add(tweets);
-            csvWriter.writeAll(sent, false);
-        }
-    }
-
-    public Optional<Set<String>> readProcessedTweetsFile(String processedTweetsPath) throws IOException{
-        Path path = Path.of(processedTweetsPath);
-        boolean fileExists = Files.exists(path) && !isFileEmpty(path);
-
-        if(fileExists){
-            try(BufferedReader reader = Files.newBufferedReader(path)){
-
-                String[] processedTweets = reader.lines().toArray(String[]::new);
-
-                return Optional.of(Set.copyOf(Arrays.stream(processedTweets).collect(Collectors.toSet())));
-            }
-        }
-        return Optional.empty();
     }
 
     private boolean isFileEmpty(Path path) throws IOException {

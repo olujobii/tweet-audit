@@ -1,43 +1,39 @@
 package com.olujobii.orchestrator;
 
 import com.olujobii.ai_client.AIProvider;
+import com.olujobii.csv_parser.CSVHandler;
 import com.olujobii.model.*;
-import com.olujobii.parser.CsvParser;
-import com.olujobii.parser.TweetParser;
+import com.olujobii.tweet_parser.TweetHandler;
 import com.olujobii.util.PromptBuilderUtil;
-import com.opencsv.exceptions.CsvDataTypeMismatchException;
-import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class AppOrchestrator {
-    private final TweetParser tweetParser;
-    private final CsvParser csvParser;
+    private final TweetHandler tweetHandler;
+    private final CSVHandler csvHandler;
     private final AIProvider aiProvider;
     private final String filePath;
-    private final String processedTweetsPath;
     private final Criteria criteria;
+    private final String outputPath;
 
-    public AppOrchestrator(TweetParser tweetParser,
-                           CsvParser csvParser,
+    public AppOrchestrator(TweetHandler tweetHandler,
+                           CSVHandler csvHandler,
                            AIProvider aiProvider,
                            String filePath,
-                           String processedTweetsPath,
-                           Criteria criteria) {
+                           Criteria criteria,
+                           String outputPath) {
 
-        this.tweetParser = tweetParser;
-        this.csvParser = csvParser;
+        this.tweetHandler = tweetHandler;
+        this.csvHandler = csvHandler;
         this.aiProvider = aiProvider;
         this.filePath = filePath;
-        this.processedTweetsPath = processedTweetsPath;
         this.criteria = criteria;
+        this.outputPath = outputPath;
     }
 
-    public void run() throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
-        List<Tweet> tweets = tweetParser.readFile(filePath);
+    public void run() throws IOException {
+        List<Tweet> tweets = tweetHandler.readTweetArchive(filePath);
 
         if(tweets.isEmpty()){
             System.out.println("You have no archived tweets to analyze");
@@ -45,14 +41,13 @@ public class AppOrchestrator {
         }
 
         //Reading processed tweets from file
-        Set<String> processedTweetsFromCsv = csvParser.readProcessedTweetsFile(processedTweetsPath)
-                        .orElse(new HashSet<>());
+        Set<String> processedTweets = tweetHandler.readProcessedTweets();
 
-        batchElements(criteria, tweets, processedTweetsFromCsv);
+        batchElements(criteria, tweets, processedTweets);
     }
 
     private void batchElements(Criteria criteria, List<Tweet> tweets, Set<String> processedTweetsFromCsv) throws
-            IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
+            IOException {
 
         final int noOfElementsInBatch = 5;
         int noOfBatchGroup = tweets.size() / noOfElementsInBatch;
@@ -99,43 +94,37 @@ public class AppOrchestrator {
     }
 
     private void analyzeTweets(String prompt)throws
-            IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException{
+            IOException {
 
         //Send prompt to AI and get response in ArrayList
-        List<ModelResponseTweet> modelResponseTweets = new ArrayList<>(aiProvider.analyzeTweets(prompt));
+        List<ModelResponseTweet> modelResponseTweets = aiProvider.analyzeTweets(prompt);
 
-        //Get tweets flagged by AI
-        List<FlaggedTweet> flaggedTweets = new ArrayList<>(getFlaggedTweets(modelResponseTweets));
+        List<FlaggedTweet> flaggedTweets = new ArrayList<>();
+        Set<String> processedTweets = new HashSet<>();
 
-        //Get Tweet ID for all processed tweets
-        Set<String> processedTweets = new HashSet<>(getProcessedTweets(modelResponseTweets));
+        extractFlaggedTweetAndProcessedTweetId(modelResponseTweets, flaggedTweets, processedTweets);
 
         if(!flaggedTweets.isEmpty()){
-            String outputPath = "flagged-tweets_"+ LocalDate.now()+".csv";
-            csvParser.parseFlaggedTweetsToCSVFile(flaggedTweets, outputPath);
-            flaggedTweets.clear();
+            csvHandler.parseFlaggedTweetsToCSVFile(flaggedTweets, outputPath);
         }
 
-        csvParser.parseProcessedTweetsToCSVFile(processedTweets, processedTweetsPath);
-        processedTweets.clear();
-        modelResponseTweets.clear();
+        tweetHandler.writeProcessedTweets(processedTweets);
     }
 
-    private List<FlaggedTweet> getFlaggedTweets(List<ModelResponseTweet> modelResponseTweets){
-        return modelResponseTweets.stream()
-                .filter(ModelResponseTweet::isFlagged)
-                .map(tweet -> new FlaggedTweet(buildTweetURL(tweet.id()), tweet.classification()))
-                .toList();
-    }
+    private void extractFlaggedTweetAndProcessedTweetId(List<ModelResponseTweet> modelResponseTweets,
+                                                        List<FlaggedTweet> flaggedTweets,
+                                                        Set<String> processedTweets) {
 
-    private Set<String> getProcessedTweets(List<ModelResponseTweet> modelResponseTweets){
-        return modelResponseTweets.stream()
-                .map(ModelResponseTweet::id)
-                .collect(Collectors.toSet());
+        for(ModelResponseTweet tweet : modelResponseTweets){
+            processedTweets.add(tweet.id());
+
+            if(tweet.isFlagged())
+                flaggedTweets.add(new FlaggedTweet(buildTweetURL(tweet.id()), tweet.classification()));
+        }
     }
 
     private List<Tweet> checkIfTweetIsProcessed(List<Tweet> tweets, Set<String> processedTweets){
-        if(processedTweets.isEmpty())
+        if(processedTweets == null)
             return tweets;
 
         tweets.removeIf(tweet -> processedTweets.contains(tweet.id()));

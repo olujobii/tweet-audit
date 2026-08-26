@@ -14,12 +14,10 @@ import java.util.Map;
 
 public class GeminiClientImpl implements AIProvider {
     private static final String MODEL = "gemini-3.1-flash-lite";
-    private final Gson gson;
     private final RetryHandler retryHandler;
 
-    public GeminiClientImpl(){
-        this.gson = new Gson();
-        this.retryHandler = new RetryHandler(new RateLimiter(15));
+    public GeminiClientImpl(int requestPerMinute){
+        this.retryHandler = new RetryHandler(new RateLimiter(requestPerMinute));
     }
 
     @Override
@@ -35,6 +33,7 @@ public class GeminiClientImpl implements AIProvider {
     }
 
     private List<ModelResponseTweet> sendPrompt(String prompt){
+        Gson gson = new Gson();
         List<ModelResponseTweet> modelResponseTweets;
         java.lang.reflect.Type type = new TypeToken<List<ModelResponseTweet>>(){}.getType();
 

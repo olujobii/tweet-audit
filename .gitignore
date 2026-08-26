@@ -3,7 +3,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
-src/main/java/com/olujobii/Play.java
+
 
 ### IGNORING TWITTER ARCHIVE AND FILES ###
 tweets.js
@@ -12,6 +12,7 @@ twitter-*.zip
 criteria.json
 flagged-tweets_*.csv
 processed-tweets.csv
+data
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
