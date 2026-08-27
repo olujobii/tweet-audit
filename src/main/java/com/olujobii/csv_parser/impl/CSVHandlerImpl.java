@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class CSVHandlerImpl implements CSVHandler {
 
     @Override
-    public void parseFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException {
+    public void writeFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException {
         Path path = Path.of("data/output/"+outputPath);
 
         boolean isFileDoesNotExistsOrEmpty = Files.notExists(path) || isFileEmpty(path);
@@ -33,7 +33,7 @@ public class CSVHandlerImpl implements CSVHandler {
 
         //If true, it should create new file and insert headers. If false, it should append to file and skip insertion of headers.
         if(isFileDoesNotExistsOrEmpty) {
-            Files.createDirectory(Path.of("data/output"));
+            createDirectoryIfNotExists();
             try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE)) {
 
                 StatefulBeanToCsv<FlaggedTweet> beanToCsv = new StatefulBeanToCsvBuilder<FlaggedTweet>(writer)
@@ -68,5 +68,11 @@ public class CSVHandlerImpl implements CSVHandler {
         try(BufferedReader reader = Files.newBufferedReader(path)){
             return reader.lines().collect(Collectors.joining()).isBlank();
         }
+    }
+
+    private void createDirectoryIfNotExists() throws IOException{
+        Path path = Path.of("data/output/");
+        if(Files.notExists(path))
+            Files.createDirectory(path);
     }
 }

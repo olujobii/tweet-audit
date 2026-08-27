@@ -6,5 +6,5 @@ import java.io.IOException;
 import java.util.List;
 
 public interface CSVHandler {
-    void parseFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException;
+    void writeFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException;
 }
