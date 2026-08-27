@@ -11,7 +11,6 @@ import com.olujobii.tweet_parser.TweetHandler;
 import com.olujobii.tweet_parser.impl.TweetHandlerImpl;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 
 public class Main {
 
@@ -27,12 +26,9 @@ public class Main {
             System.exit(1);
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Shutting down.......\nIf any tweet has been processed, be rest assured that it is saved and you " +
-                    "can resume later 😊");
-            System.out.println(Paths.get("").toAbsolutePath());
-
-        }));
+        Runtime.getRuntime().addShutdownHook(new Thread(() ->
+                System.out.println("Shutting down.......\nIf any tweet has been processed, be rest assured that it is saved and you " +
+                        "can resume later.")));
 
         int argsSize = args.length;
         String archivePath = args[0];
@@ -53,7 +49,7 @@ public class Main {
         try{
             int requestPerMinute = getRequestPerMinute(argsSize, args);
             AppOrchestrator appOrchestrator = getAppOrchestrator("data/"+archivePath, getUserCriteria("data/"+configPath), outputPath, requestPerMinute);
-            System.out.println("=====TWEET AUDITING CLI TOOL=====");
+            System.out.println("=====TWEET AUDIT CLI TOOL=====");
             appOrchestrator.run();
         }catch (NumberFormatException __) {
             System.out.println("RPM specified is not a valid input: "+args[3]);
