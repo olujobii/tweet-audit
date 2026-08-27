@@ -1,10 +1,8 @@
-package com.olujobii.parser;
+package com.olujobii.csv_parser.impl;
 
+import com.olujobii.csv_parser.CSVHandler;
 import com.olujobii.model.FlaggedTweet;
-import com.opencsv.bean.HeaderColumnNameMappingStrategy;
-import com.opencsv.bean.HeaderColumnNameMappingStrategyBuilder;
-import com.opencsv.bean.StatefulBeanToCsv;
-import com.opencsv.bean.StatefulBeanToCsvBuilder;
+import com.opencsv.bean.*;
 import com.opencsv.exceptions.CsvDataTypeMismatchException;
 import com.opencsv.exceptions.CsvRequiredFieldEmptyException;
 
@@ -15,16 +13,14 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDate;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class CSVParser {
+public class CSVHandlerImpl implements CSVHandler {
 
-    public void parseToCSV(List<FlaggedTweet> flaggedTweets) throws IOException, CsvRequiredFieldEmptyException, CsvDataTypeMismatchException {
-        LocalDate now = LocalDate.now();
-        String filePath = "flagged-tweets_"+now+".csv";
-        Path path = Path.of(filePath);
+    @Override
+    public void writeFlaggedTweetsToCSVFile(List<FlaggedTweet> flaggedTweets, String outputPath) throws IOException {
+        Path path = Path.of("data/output/"+outputPath);
 
         boolean isFileDoesNotExistsOrEmpty = Files.notExists(path) || isFileEmpty(path);
 
@@ -37,6 +33,7 @@ public class CSVParser {
 
         //If true, it should create new file and insert headers. If false, it should append to file and skip insertion of headers.
         if(isFileDoesNotExistsOrEmpty) {
+            createDirectoryIfNotExists();
             try (BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.CREATE)) {
 
                 StatefulBeanToCsv<FlaggedTweet> beanToCsv = new StatefulBeanToCsvBuilder<FlaggedTweet>(writer)
@@ -44,6 +41,8 @@ public class CSVParser {
                         .build();
 
                 beanToCsv.write(flaggedTweets);
+            }catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException ex){
+                throw new RuntimeException("Error occurred while writing flagged tweets to "+outputPath, ex);
             }
         }else{
             try(BufferedWriter writer = Files.newBufferedWriter(path, StandardOpenOption.APPEND);
@@ -59,6 +58,8 @@ public class CSVParser {
                 int index = contents.indexOf("\n") + 1;
                 String dataOnly = contents.substring(index);
                 writer.write(dataOnly);
+            }catch (CsvRequiredFieldEmptyException | CsvDataTypeMismatchException ex){
+                throw new RuntimeException("Error occurred while writing flagged tweets to "+outputPath, ex);
             }
         }
     }
@@ -67,5 +68,11 @@ public class CSVParser {
         try(BufferedReader reader = Files.newBufferedReader(path)){
             return reader.lines().collect(Collectors.joining()).isBlank();
         }
+    }
+
+    private void createDirectoryIfNotExists() throws IOException{
+        Path path = Path.of("data/output/");
+        if(Files.notExists(path))
+            Files.createDirectory(path);
     }
 }

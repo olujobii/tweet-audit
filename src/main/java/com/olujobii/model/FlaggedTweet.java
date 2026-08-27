@@ -7,9 +7,6 @@ public record FlaggedTweet(
         String tweet_url,
 
         @CsvBindByName
-        String classification,
-
-        @CsvBindByName
-        boolean deleted
+        String classification
 ) {
 }
