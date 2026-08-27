@@ -21,14 +21,14 @@ public class TweetHandlerTest {
     void setUp() throws IOException{
         this.tweetHandler = new TweetHandlerImpl();
         filePath = "data/tweets.js";
-        Path path = Path.of("mock-tweets.js");
+        Path path = Path.of("data/mock-tweets.js");
         Files.deleteIfExists(path);
         Files.createFile(path);
     }
 
     @AfterEach
     void cleanUp() throws IOException{
-        Path path = Path.of("mock-tweets.js");
+        Path path = Path.of("data/mock-tweets.js");
         Files.deleteIfExists(path);
     }
 
@@ -44,5 +44,10 @@ public class TweetHandlerTest {
         assertFalse(tweets.isEmpty());
         assertNotNull(tweets.getFirst().fullText());
         assertNotNull(tweets.getFirst().id());
+    }
+
+    @Test
+    void testReadTweetArchive_whenFileIsBlank_shouldThrowStringIndexOutOfBoundsException(){
+        assertThrows(StringIndexOutOfBoundsException.class, () -> tweetHandler.readTweetArchive("data/mock-tweets.js"));
     }
 }
