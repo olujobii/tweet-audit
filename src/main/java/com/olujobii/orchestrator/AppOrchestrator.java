@@ -105,7 +105,7 @@ public class AppOrchestrator {
         extractFlaggedTweetAndProcessedTweetId(modelResponseTweets, flaggedTweets, processedTweets);
 
         if(!flaggedTweets.isEmpty()){
-            csvHandler.parseFlaggedTweetsToCSVFile(flaggedTweets, outputPath);
+            csvHandler.writeFlaggedTweetsToCSVFile(flaggedTweets, outputPath);
         }
 
         tweetHandler.writeProcessedTweets(processedTweets);

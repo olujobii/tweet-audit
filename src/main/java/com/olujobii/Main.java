@@ -17,18 +17,19 @@ public class Main {
 
     public static void main( String[] args ) {
 
-        if(args.length < 3){
+        if(args.length < 3 || args.length > 5){
             System.out.println("WRONG COMMAND INPUT");
             System.out.println("Usage: java -jar target/tweet-audit-1.0-SNAPSHOT.JAR <archive-path.js> <config-path.json> [--rpm]");
             System.out.println("archive-path: The path to the file containing your tweet archives");
             System.out.println("criteria-path: The path to the file containing your alignment criteria");
             System.out.println("output-path: desired name of file to persist the tweets marked for deletion");
             System.out.println("--rpm: Customizable configuration to specify request per minute if user is not in Free tier.");
-            return;
+            System.exit(1);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Shutting down.......\nAny processed tweet has been saved and you can resume later");
+            System.out.println("Shutting down.......\nIf any tweet has been processed, be rest assured that it is saved and you " +
+                    "can resume later 😊");
             System.out.println(Paths.get("").toAbsolutePath());
 
         }));
@@ -37,14 +38,6 @@ public class Main {
         String archivePath = args[0];
         String configPath = args[1];
         String outputPath = args[2];
-        int requestPerMinute;
-
-        try {
-            requestPerMinute = getUserDefinedRequestPerMinute(argsSize, args);
-        } catch (NumberFormatException __) {
-            System.out.println("RPM specified is not a valid input: "+args[3]);
-            return;
-        }
 
         checkFileExtension(archivePath,"js");
         checkFileExtension(configPath, "json");
@@ -58,26 +51,32 @@ public class Main {
 
 
         try{
+            int requestPerMinute = getRequestPerMinute(argsSize, args);
             AppOrchestrator appOrchestrator = getAppOrchestrator("data/"+archivePath, getUserCriteria("data/"+configPath), outputPath, requestPerMinute);
             System.out.println("=====TWEET AUDITING CLI TOOL=====");
             appOrchestrator.run();
+        }catch (NumberFormatException __) {
+            System.out.println("RPM specified is not a valid input: "+args[3]);
+            System.exit(1);
         }catch(IOException ex){
             System.out.println("Failed to process file: "+ex.getMessage());
+            System.exit(1);
         } catch(Exception ex){
             System.out.println("Error Occurred: "+ex.getMessage());
+            System.exit(1);
         }
     }
 
-    private static int getUserDefinedRequestPerMinute(int argsSize, String[] args)throws NumberFormatException{
-        if(argsSize != 4)
+    private static int getRequestPerMinute(int argsSize, String[] args)throws NumberFormatException{
+        if(argsSize != 5)
             return 15;// Default RPM for Gemini 3.1 flash lite model(Free tier)
 
-        if(args[2] != null && !args[2].equals("--rpm")){
-            System.out.println(args[2]+" is not a valid configurable. Kindly refer to README.md for guidance");
+        if(args[3] != null && !args[3].equals("--rpm")){
+            System.out.println(args[3]+" is not a valid configurable. Kindly refer to README.md for guidance");
             System.exit(1);
         }
 
-        int requestPerMinute = Integer.parseInt(args[3]);
+        int requestPerMinute = Integer.parseInt(args[4]);
         if(requestPerMinute < 15){
             System.out.println("RPM specified is less than 15(which is lower than RPM specified for free tier of this model)." +
                     "Kindly specify a valid RPM");
