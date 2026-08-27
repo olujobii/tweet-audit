@@ -54,7 +54,7 @@ public class TweetHandlerImpl implements TweetHandler {
         if(Files.exists(path) && !checkIfProcessedTweetFileIsNotBlank()){
             Set<String> processedTweets = new HashSet<>();
             try(BufferedReader reader = Files.newBufferedReader(path)){
-                processedTweets.add(reader.readLine());
+                reader.lines().forEach(processedTweets::add);
             }
             return processedTweets;
         }
