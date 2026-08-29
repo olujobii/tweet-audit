@@ -1,12 +1,12 @@
 # TWEET AUDIT
-Tweet Audit is a CLI application that analyzes your tweets(X) archive using Gemini AI and flags tweets that go against your alignment criteria for manual deletion.
+Tweet Audit is a CLI application that analyses your tweets(X) archive using Gemini AI and flags tweets that go against your alignment criteria for manual deletion.
 
 ## FEATURES
 - Resumable workflow - Can resume from your last progress without any worries
 - Exponential backoff - Cooldown time that increases exponentially before retrying a request
 - Dynamic Rate Limiter - You can insert your Gemini API RPM that matches your current plan to override the default configuration
 - Saves flagged tweets for manual deletion in a csv file for you.
-- Customizable evaluation criteria
+- Customisable evaluation criteria
 
 ## PREREQUISITES
 - Java 21+
@@ -24,7 +24,7 @@ Tweet Audit is a CLI application that analyzes your tweets(X) archive using Gemi
 ## SETUP PROCESS
 - Get your Twtitter/X archive from Settings. This can take up to 24-48 hours
 - Get Gemini API Key: [Google AI Studio](https://aistudio.google.com/apikey).
-- Follow the instructions here to set your environment variables: [Setting Env. variables](https://ai.google.dev/gemini-api/docs/api-key). Use environment variable __GOOGLE_API_KEY__ as this is what the application recognizes.
+- Follow the instructions here to set your environment variables: [Setting Env. variables](https://ai.google.dev/gemini-api/docs/api-key). Use environment variable __GOOGLE_API_KEY__ as this is what the application recognises.
 
 ## USAGE
 - Clone the GitHub repository
@@ -47,11 +47,11 @@ java -jar target/tweet-audit-1.0-SNAPSHOT.jar <archive_path.js> <config_path.jso
 ```
 - archive_path.js: Represents file name of the Twitter/X archive in `data` folder.
 - config_path.json: Represents file name of the alignment criteria in `data` folder.
-- output.csv: Represents name you will like to give the file that stores the flagged tweets in `data/output` folder.
+- output.csv: Represents name you would like to give the file that stores the flagged tweets in `data/output` folder.
 - rpm: Default value is 15. If you are not on free tier plan, get your assigned RPM for the Gemini 3.1 flash lite model and pass as a command-line argument.
 
->__NOTE: rpm is an optional arguments. If you are not on the free tier in your Google AI studio, I recommend you enter the value of the Request Per Minute(RPM) for the Gemini 3.1 flash lite model. You can get this information here: [Rate Limit](https://aistudio.google.com/rate-limit?timeRange=last-90-days)__
-- If you like to customize rpm (Example)
+>__NOTE: rpm is an optional argument. If you are not on the free tier in your Google AI studio, I recommend you enter the value of the Request Per Minute(RPM) for the Gemini 3.1 flash lite model. You can get this information here: [Rate Limit](https://aistudio.google.com/rate-limit?timeRange=last-90-days)__
+- If you like to customise rpm (Example)
 ```bash
 java -jar target/tweet-audit-1.0-SNAPSHOT.jar <archive_path.js> <config_path.json> <output.csv> --rpm 25
 ```
